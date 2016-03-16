@@ -5,17 +5,22 @@
  */
 package unlockme;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import javafx.util.Pair;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author bbphuc
  */
 public class Searcher {
+    
     private class Tuple{
         public int key;
         public Tuple preNode = null;
@@ -25,13 +30,30 @@ public class Searcher {
             this.key = key;
             this.state = state;
         }
-        
-        
-        
+          
     }
+    
+    public Searcher(){
+        outfile = new File(output);
+        try {
+            fw = new FileWriter(outfile);
+        } catch (IOException ex) {
+            Logger.getLogger(Searcher.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
     Queue<Tuple> q = new ArrayDeque<>();
     List<State> solution = new ArrayList<>();
     List<Tuple> history = new ArrayList<>();
+    
+    String output = "F:\\sol.txt";
+    File outfile;
+    FileWriter fw;
+    
+    public void close() throws IOException{
+        fw.close();
+    }
+    
     public List<State> getSolution(){
         return solution;
     }
@@ -48,8 +70,16 @@ public class Searcher {
     
     private void print(Tuple t){
         if(t != null){
-            System.out.println(t.state);
             print(t.preNode);
+            String str = String.format("%d %d %d \n", t.state.getPreIndex(),t.state.getPreX(), t.state.getPreY());
+            
+            if(fw != null && t.state.getPreIndex() != 0)
+            try {
+                System.out.printf("%d %d %d \n",t.state.getPreIndex(),t.state.getPreX(), t.state.getPreY());
+                fw.write(str);
+                } catch (IOException ex) {
+                    Logger.getLogger(Searcher.class.getName()).log(Level.SEVERE, null, ex);
+                }
         }
     }
     
@@ -63,7 +93,6 @@ public class Searcher {
             
         // Generate next states
         List<State> newstates = t.state.getNewState();
-        System.out.println(" STEP  = " + k++);
         newstates.stream().forEach((n) -> {
             Tuple tp = new Tuple(t.key + 1, n);
             tp.preNode = t;
@@ -76,20 +105,5 @@ public class Searcher {
         }
         else
             return false;
-        
-        /*
-        q.addAll(newstates);
-        // If queue is empty
-        if(q.isEmpty())
-            return false;
-        
-        // Call next in queue
-        State next = q.poll();
-        //System.out.println(next);
-        boolean result =  path(next);
-        if(result)
-            this.solution.add(next);
-        
-        return result;*/
     }
 }

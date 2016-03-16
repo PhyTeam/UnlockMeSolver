@@ -7,6 +7,7 @@ package unlockme;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,13 +26,36 @@ public class State implements IState, Cloneable {
     
     public static List<State> visitedState = new ArrayList<>();
     
+
+    private int preX;
+    private int preY;
+    private int preIndex;
+    
+    public int getPreIndex(){
+        return preIndex;
+    };
+    
+    public int getPreX() {
+        return preX;
+    }
+
+    public int getPreY() {
+        return preY;
+    }
+    
+    public void setPreMove(int idx, int x, int y){
+        this.preX = x;
+        this.preY = y;
+        this.preIndex = idx;
+    }
+    
     public static class Block implements Cloneable{
         
         int x,y; // Toan do tren cung, ben trai
         int uvx, uvy; // Neu (uvx,uvy) = (1,0) thanh doc, (0,1) la thanh ngang
         int index; // Index trong ma tran
         int l; // Do dai cua thanh
-
+        
         public int getX() {
             return x;
         }
@@ -63,8 +87,6 @@ public class State implements IState, Cloneable {
             this.uvy = uvy;
             this.index = index;
             this.l = l;
-            
-            
         }
         
         @Override
@@ -82,8 +104,6 @@ public class State implements IState, Cloneable {
             }
             return "";
         }
-        
-        
     }
     
     protected int mState[][];
@@ -113,7 +133,6 @@ public class State implements IState, Cloneable {
             x0 = block.getX() + (block.getL()-1) * uvx;
             y0 = block.getY() + (block.getL()-1) * uvy;
         }
-        //System.out.println("x0 = " + x0);System.out.println("delta = " + delta);
         
         for (int i = 1; i <= Math.abs(delta); i++) {
             boolean ok;
@@ -122,13 +141,15 @@ public class State implements IState, Cloneable {
             if (conditions) 
                 ok = this.mState[x0 + i * sig * uvx][ y0 + i * sig * uvy] == 0;
             else ok = false;
-            //if(!ok) System.out.printf("Not ok (x0, y0) = (%d,%d), d = %d", x0,y0,delta);
             if(!ok) return null;
         }
         
         
         // Generate new state and copy infomation
         State newstate = new State();
+        // Save premove
+        newstate.setPreMove(block.index, dx * uvx, dy * uvy);
+        
         for (int i = 0; i < 6; i++) {
             System.arraycopy(this.mState[i], 0, newstate.mState[i], 0, 6);
         }
@@ -239,69 +260,59 @@ public class State implements IState, Cloneable {
         return buff.toString();
     }
     
-    public static State loadFromFile(String path){
+    public static State loadFromFile(InputStream is){
         State state = new State();
         List<Block> lb = state.lblock;
-        File file = new File(path);
-        try {
-            Scanner scanner = new Scanner(file);
-            int i = 0;
-            while(scanner.hasNextInt()){
-                int value = scanner.nextInt();
-                int col = i % 6;
-                int row = i / 6;
-                state.mState[row][col] = value;
-                i++;
-            }
-            // Xu li du lieu
-            boolean checked[][] = new boolean[6][6];
-            for (int j = 0; j < 6; j++) {
-                for (int k = 0; k < 6; k++) {
-                    if (checked[j][k])
-                        continue;
-                    checked[j][k] = true;
-                    if(state.mState[j][k] != 0){
-                        //System.out.println("INDEX = " + state.mState[j][k]);
-                        int index = state.mState[j][k],
-                            count = 1;
-                       
-                        for (int l = 1; l < 6; l++) {
-                            if (inbound(j + l, 0, 5) && (
-                                    state.mState[j + l][k] == index)){
-                                checked[j+l][k] = true;
-                                count++;
-                            }
-                            else break;
-                        }
-                        
-                        if(count > 1){
-                            Block b = new Block(j, k, 1, 0, index, count);
-                            lb.add(b);
-                            continue;
-                        }
-                        //System.out.println("OK");
+        Scanner scanner = new Scanner(is);
+        int i = 0;
+        while(scanner.hasNextInt()){
+            int value = scanner.nextInt();
+            int col = i % 6;
+            int row = i / 6;
+            state.mState[row][col] = value;
+            i++;
+        }
+        // Xu li du lieu
+        boolean checked[][] = new boolean[6][6];
+        for (int j = 0; j < 6; j++) {
+            for (int k = 0; k < 6; k++) {
+                if (checked[j][k])
+                    continue;
+                checked[j][k] = true;
+                if(state.mState[j][k] != 0){
+                    int index = state.mState[j][k],
                         count = 1;
-                        for (int l = 1; l < 6; l++) {
-                            if (
-                                    inbound(k + l, 0, 5) && 
-                                    (state.mState[j][k + l] == index)){
-                                checked[j][k + l] = true;
-                                count++;
-                            }
-                            else break;
+
+                    for (int l = 1; l < 6; l++) {
+                        if (inbound(j + l, 0, 5) && (
+                                state.mState[j + l][k] == index)){
+                            checked[j+l][k] = true;
+                            count++;
                         }
-                        System.out.println(count);
-                        if(count > 1){
-                            Block b = new Block(j, k, 0, 1, index, count);
-                            lb.add(b);
+                        else break;
+                    }
+
+                    if(count > 1){
+                        Block b = new Block(j, k, 1, 0, index, count);
+                        lb.add(b);
+                        continue;
+                    }
+                    count = 1;
+                    for (int l = 1; l < 6; l++) {
+                        if (
+                                inbound(k + l, 0, 5) && 
+                                (state.mState[j][k + l] == index)){
+                            checked[j][k + l] = true;
+                            count++;
                         }
+                        else break;
+                    }
+                    if(count > 1){
+                        Block b = new Block(j, k, 0, 1, index, count);
+                        lb.add(b);
                     }
                 }
             }
-            
-            
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(State.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         // Return result
