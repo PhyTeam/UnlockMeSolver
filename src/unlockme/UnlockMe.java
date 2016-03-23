@@ -19,36 +19,73 @@ import java.util.List;
 public class UnlockMe {
 
     private static final long MEGABYTE = 1024L * 1024L;
-
+    
+    private static final String DFS = "dfs";
+    private static final String BFS = "bfs";
+    private static final String HCS = "hcs";
+    
     public static long bytesToMegabytes(long bytes) {
         return bytes / MEGABYTE;
     }
+    
+    public static AbstractSearcher createSearcher(String type){
+        //System.out.println(type);
+        if(type.equalsIgnoreCase(DFS)){
+            return new DepthFirstSearcher();
+        }
+        if(type.equalsIgnoreCase(BFS))
+            return new BreathFirsrSearcher();
+        if(type.equalsIgnoreCase(HCS))
+            return new ClimbHillSearcher();
+        
+        // Other algorithm 
+        System.err.println("Unsupport algorthm.");
+        throw new IllegalArgumentException(type);
+    }
     /**
      * @param args the command line arguments
+     * @throws java.lang.CloneNotSupportedException
+     * @throws java.io.IOException
      */
     public static void main(String[] args) throws CloneNotSupportedException, IOException {
-         long startTime = System.currentTimeMillis();
-
-
+        // Start time estimate
+        long startTime = System.currentTimeMillis();
+        // Parse args
+        int count;
+        String type = null, testfile = null;
+        for(count = 0; count < args.length; count++){
+            if(args[count].equalsIgnoreCase("-s")){
+                type = args[count+1];
+                count++; continue;
+            }
+            
+            if(args[count].equalsIgnoreCase("-f")){
+                testfile = args[count + 1];
+                count++;
+            }
+        }
+        
         InputStream is;
-        if  (args.length < 1)
+        if  (testfile == null)
             // pass data by redirect system input 
             is = System.in;
         else {
             // Pass data by file
-            File fin = new File(args[0]);
+            File fin = new File(testfile);
             is = new FileInputStream(fin);
         }
         State s = State.loadFromFile(is);
-        Searcher al = new Searcher();
-        al.path(s);
+        Searcher searcher = new Searcher();
+        searcher.path(s);
         //long memory = Runtime.getRuntime().
-        al.print();
-        al.close();
-        
+        searcher.print();
+        // Denote this is end of steps
+        System.out.println("END.");
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-        System.out.println(elapsedTime);
+        
+        // Pass elapsed time by System.err
+        System.err.print(elapsedTime);
         
         // Get the Java runtime
         Runtime runtime = Runtime.getRuntime();
@@ -56,9 +93,7 @@ public class UnlockMe {
         runtime.gc();
         // Calculate the used memory
         long memory = runtime.totalMemory() - runtime.freeMemory();
-        System.out.println("Used memory is bytes: " + memory);
-        System.out.println("Used memory is megabytes: "
-            + bytesToMegabytes(memory));
+        System.err.print(memory);
     }
     
 }
