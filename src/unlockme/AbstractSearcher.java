@@ -8,7 +8,7 @@ public class AbstractSearcher {
     /**
      * Declare a structure to build search tree for backtrack
      */
-    public class Node{
+    public final class Node{
         public int level;
         public Node preNode = null;
         public State state;
@@ -17,10 +17,12 @@ public class AbstractSearcher {
          * Constructor
          * @param level the level of this state.
          * @param state 
+         * @param prev parent node
          */
-        public Node(int level, State state) {
+        public Node(int level, State state, Node prev) {
             this.level = level;
             this.state = state;
+            this.preNode = prev;
         }
     }
     
@@ -51,7 +53,8 @@ public class AbstractSearcher {
                     node.state.getPreIndex(),
                     node.state.getPreX(), 
                     node.state.getPreY());
-            System.out.print(str);
+            if (node.state.getPreIndex() != 0)
+                System.out.print(str);
         }
     }
 }

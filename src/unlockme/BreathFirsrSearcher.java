@@ -1,6 +1,9 @@
 package unlockme;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
@@ -10,35 +13,35 @@ import java.util.Queue;
  */
 public class BreathFirsrSearcher extends AbstractSearcher{
 
-    private final Queue<Node> queue = new ArrayDeque<>();
-    
+    private final Queue<Node> queue = new LinkedList<>();
+    private final List<State> visitedState = new ArrayList<>();
     @Override
     public boolean search(State state) {
-        Node head = new Node(0, state);
-        return search_r(head);
-    }
-    
-    protected boolean search_r(Node node){
-        if (node.state.checkGoal()){
-            this.last_node = node;
-            // Success
-            return true;
-        }
+        Node head = new Node(0, state, null);
+        // Add initial state
+        visitedState.add(state);
+        queue.add(head);
+        while(!queue.isEmpty()) {
+            final Node node = queue.poll();
+            if (node.state.checkGoal()){
+                this.last_node = node;
+                // Success
+                return true;
+            }
+            // Mark has been visited this state
+            visitedState.add(node.state);
             
-        // Generate next states
-        List<State> newstates = node.state.getNewState();
-        newstates.stream().forEach((state) -> {
-            Node new_node = new Node(node.level + 1, state);
-            new_node.preNode = node;
-            queue.offer(new_node);
-        });
-        
-        // If there is not has any state stop algorithm
-        if(!queue.isEmpty()){
-            return search_r(queue.poll());
+            // Generate next states
+            List<State> newstates = node.state.getNewState();
+            newstates.stream().map((nstate) -> new Node(node.level + 1, nstate, node)).forEach((childNode) -> {
+                if(!visitedState.contains(childNode.state)){
+                    visitedState.add(childNode.state);
+                    queue.offer(childNode);
+                }
+                
+            });
         }
-        else
-            return false;
+        return false;
     }
     
 }

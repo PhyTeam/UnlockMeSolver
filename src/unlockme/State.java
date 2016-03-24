@@ -12,9 +12,12 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,9 +27,7 @@ import java.util.logging.Logger;
  */
 public class State implements IState, Cloneable {
     
-    public static List<State> visitedState = new ArrayList<>();
-    
-
+    public static long count;
     private int preX;
     private int preY;
     private int preIndex;
@@ -50,19 +51,9 @@ public class State implements IState, Cloneable {
     }
     
     public static class Block implements Cloneable{
-        
-        int x,y; // Toan do tren cung, ben trai
         int uvx, uvy; // Neu (uvx,uvy) = (1,0) thanh doc, (0,1) la thanh ngang
         int index; // Index trong ma tran
         int l; // Do dai cua thanh
-        
-        public int getX() {
-            return x;
-        }
-
-        public int getY() {
-            return y;
-        }
 
         public int getUvx() {
             return uvx;
@@ -80,14 +71,29 @@ public class State implements IState, Cloneable {
             return l;
         }
 
-        public Block(int x, int y, int uvx, int uvy, int index, int l) {
-            this.x = x;
-            this.y = y;
+        public Block(int uvx, int uvy, int index, int l) {
             this.uvx = uvx;
             this.uvy = uvy;
             this.index = index;
             this.l = l;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj.getClass() != Block.class)
+                return false;
+            Block other = (Block)obj;
+            return other.index == this.index;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 79 * hash + this.index;
+            return hash;
+        }
+        
+        
         
         @Override
         public String toString(){
@@ -95,7 +101,7 @@ public class State implements IState, Cloneable {
             try {
                 String str = new String();
                 ps = new PrintStream(str);
-                ps.printf( "(%d,%d) L%d I%d (%d,%d)", x,y,index,l, uvx,uvy);
+                ps.printf( "L%d I%d (%d,%d)",index,l, uvx,uvy);
                 return ps.toString();
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(State.class.getName()).log(Level.SEVERE, null, ex);
@@ -106,16 +112,55 @@ public class State implements IState, Cloneable {
         }
     }
     
+    public static class Point implements Cloneable{
+        public int x;
+        public int y;
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public Point(int x, int y) {
+            this.x = x; this.y = y;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj.getClass() != Point.class)
+                return false;
+            return ((Point)obj).x == this.x && ((Point)obj).y == this.y;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 79 * hash + this.x;
+            hash = 79 * hash + this.y;
+            return hash;
+        }
+
+        @Override
+        protected Object clone() throws CloneNotSupportedException {
+            return new Point(this.x, this.y);
+        }
+        
+        
+        
+    }
     protected int mState[][];
     
     protected List<Block> lblock;
     
-    public List<Block> test;
+    protected Map<Block, Point> mblocks;
     
     public State(){
+        count++;
         mState = new int[6][6];
-        lblock = new ArrayList<>();
-        test = new ArrayList<>();
+        mblocks = new HashMap<>();
     }
     
     protected State move(Block block, int dx, int dy)  {
@@ -126,12 +171,13 @@ public class State implements IState, Cloneable {
         int sig = (delta < 0) ? -1 : 1;
         int x0, y0;
         
+        Point pos = mblocks.get(block);
         if(delta < 0) { // Di chuyen nguoc ve phia trai hoac di len
-            x0 = block.getX();
-            y0 = block.getY();        
+            x0 = pos.getX();
+            y0 = pos.getY();        
         } else {
-            x0 = block.getX() + (block.getL()-1) * uvx;
-            y0 = block.getY() + (block.getL()-1) * uvy;
+            x0 = pos.getX() + (block.getL()-1) * uvx;
+            y0 = pos.getY() + (block.getL()-1) * uvy;
         }
         
         for (int i = 1; i <= Math.abs(delta); i++) {
@@ -153,30 +199,32 @@ public class State implements IState, Cloneable {
         for (int i = 0; i < 6; i++) {
             System.arraycopy(this.mState[i], 0, newstate.mState[i], 0, 6);
         }
-        newstate.lblock = new ArrayList<>();
-        
-        this.lblock.stream().forEach(newstate.lblock::add);
+        newstate.lblock = this.lblock;
         
         // Sinh trang thai moi
-        //System.out.println("Long = " + block.getL());
         for (int i = 0; i < block.getL(); i++) {
-            newstate.mState[block.getX() + i * uvx]
-                  [block.getY() + i * uvy] = 0;
+            newstate.mState[pos.getX() + i * uvx]
+                  [pos.getY() + i * uvy] = 0;
         }
         for (int i = 0; i < block.getL(); i++) {
-            newstate.mState[block.getX() + (dx + i) * uvx]
-                  [block.getY() + (dy + i) * uvy] = block.getIndex();
+            newstate.mState[pos.getX() + (dx + i) * uvx]
+                  [pos.getY() + (dy + i) * uvy] = block.getIndex();
         }
         // Create new block
-        Block nblock = new Block(
-            block.x, block.y, block.uvx, block.uvy, block.index, block.l
-        );
+        int nx = pos.x + dx * uvx;
+        int ny = pos.y + dy * uvy;
+        Point newPosition = new Point(nx,ny);
         
-        nblock.x = nblock.x + dx * uvx;
-        nblock.y = nblock.y + dy * uvy;
+        this.mblocks.forEach((Block t, Point u) -> {
+            try {
+                newstate.mblocks.put(t, (Point)u.clone());
+            } catch (CloneNotSupportedException ex) {
+                Logger.getLogger(State.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        // Replace old position
+        newstate.mblocks.put(block, newPosition);
         
-        Collections.replaceAll(newstate.lblock, block, nblock);
-        //System.out.println(newstate);
         return newstate;
     }
     
@@ -191,31 +239,23 @@ public class State implements IState, Cloneable {
         List<State> ret = new ArrayList<>();
         
         for (Block block : lblock) {
-                //System.out.println(lblock.size());
                 State r = null;
                 for (int i = 1; ; i++) {
                     r = move(block, i, i);
                     if(r == null) break;
                     else {
                         //System.out.println(r);
-                        // Check some thing like that before
-                        if (!visitedState.contains(r))
-                            // If ok add to result list
-                            ret.add(r);
+                        ret.add(r);
                     }
                 }
                 for (int i = 1; ; i++) {
                     r = move(block, -i, -i);
                     if(r == null) break;
                     else {
-                        if (!visitedState.contains(r))
-                            // If ok add to result list
-                            ret.add(r);
+                        ret.add(r);
                     }
                 }
         }
-        // Add to visited list
-        visitedState.addAll(ret);
         // Return result
         return ret;
     }
@@ -231,9 +271,7 @@ public class State implements IState, Cloneable {
             return false;
         State other = (State)o;
         boolean isEquals;
-        
-        // Check state array 
-        isEquals = Arrays.deepEquals(this.mState, other.mState);
+        isEquals = this.mblocks.equals(other.mblocks);
         
         return isEquals;
     }
@@ -241,7 +279,7 @@ public class State implements IState, Cloneable {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 97 * hash + Objects.hashCode(this.lblock);
+        hash = 97 * hash + Objects.hashCode(this.mblocks);
         return hash;
     }
     
@@ -262,6 +300,7 @@ public class State implements IState, Cloneable {
     
     public static State loadFromFile(InputStream is){
         State state = new State();
+        state.lblock = new ArrayList<>();
         List<Block> lb = state.lblock;
         Scanner scanner = new Scanner(is);
         int i = 0;
@@ -293,8 +332,11 @@ public class State implements IState, Cloneable {
                     }
 
                     if(count > 1){
-                        Block b = new Block(j, k, 1, 0, index, count);
+                        Block b = new Block(1, 0, index, count);
+                        Point pos = new Point(j,k);
                         lb.add(b);
+                        // Add to map
+                        state.mblocks.put(b, pos);
                         continue;
                     }
                     count = 1;
@@ -308,8 +350,10 @@ public class State implements IState, Cloneable {
                         else break;
                     }
                     if(count > 1){
-                        Block b = new Block(j, k, 0, 1, index, count);
+                        Block b = new Block(0, 1, index, count);
                         lb.add(b);
+                        Point pos = new Point(j,k);
+                        state.mblocks.put(b, pos);
                     }
                 }
             }

@@ -75,8 +75,8 @@ public class UnlockMe {
             is = new FileInputStream(fin);
         }
         State s = State.loadFromFile(is);
-        Searcher searcher = new Searcher();
-        searcher.path(s);
+        AbstractSearcher searcher = createSearcher(type);
+        boolean ret = searcher.search(s);
         //long memory = Runtime.getRuntime().
         searcher.print();
         // Denote this is end of steps
