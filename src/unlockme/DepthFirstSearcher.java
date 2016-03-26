@@ -14,7 +14,7 @@ public class DepthFirstSearcher extends AbstractSearcher {
     Stack<Node> stack = new Stack<>();
     HashSet<State> visitedNode = new HashSet<>();
     
-    private final int max_depth = 80;
+    private final int max_depth = 1000;
     
     @Override
     public boolean search(State state) {
@@ -32,15 +32,6 @@ public class DepthFirstSearcher extends AbstractSearcher {
             // Check current level
             if(node.level > max_depth)
                 continue;
-            
-            // Find out which node is on this path
-            Node temp = node;
-            HashSet<State> lstVisited = new HashSet<>();
-            stack.forEach(n -> lstVisited.add(n.state));
-            while(temp != null){
-                lstVisited.add(temp.state);
-                temp = temp.preNode;
-            }
             
             // Generate next states
             List<State> newstates = node.state.getNewState();

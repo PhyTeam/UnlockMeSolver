@@ -9,8 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Paths;
 
 /**
  *
@@ -23,7 +22,7 @@ public class UnlockMe {
     private static final String DFS = "dfs";
     private static final String BFS = "bfs";
     private static final String HCS = "hcs";
-    
+    private static final String AS = "as";
     public static long bytesToMegabytes(long bytes) {
         return bytes / MEGABYTE;
     }
@@ -37,11 +36,39 @@ public class UnlockMe {
             return new BreathFirsrSearcher();
         if(type.equalsIgnoreCase(HCS))
             return new ClimbHillSearcher();
+        if(type.equalsIgnoreCase(AS))
+            return new AStar();
         
         // Other algorithm 
         System.err.println("Unsupport algorthm.");
         throw new IllegalArgumentException(type);
     }
+    
+    public static long solve(State state, AbstractSearcher searcher){
+        long startTime = System.currentTimeMillis();
+        boolean ret = searcher.search(state);
+        if(ret) System.out.println("LOG: found");
+        else System.out.println("Not");
+        //long memory = Runtime.getRuntime().
+        //searcher.print();
+        // Denote this is end of steps
+        //System.out.println("END.");
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        
+        // Pass elapsed time by System.err
+        //System.err.println(elapsedTime);
+        
+        // Get the Java runtime
+        Runtime runtime = Runtime.getRuntime();
+        // Run the garbage collector
+        runtime.gc();
+        // Calculate the used memory
+        long memory = runtime.totalMemory() - runtime.freeMemory();
+        //System.err.print(memory);
+        return elapsedTime;
+    }
+    
     /**
      * @param args the command line arguments
      * @throws java.lang.CloneNotSupportedException
@@ -53,6 +80,7 @@ public class UnlockMe {
         // Parse args
         int count;
         String type = null, testfile = null;
+        String input_dir = null;
         for(count = 0; count < args.length; count++){
             if(args[count].equalsIgnoreCase("-s")){
                 type = args[count+1];
@@ -63,6 +91,30 @@ public class UnlockMe {
                 testfile = args[count + 1];
                 count++;
             }
+            if(args[count].equalsIgnoreCase("-a")){
+                input_dir = args[count + 1];
+                count++;
+            }
+        }
+        String okExtension = ".txt";
+        if(input_dir != null){
+            File folder = Paths.get(input_dir).toFile();
+            File[] ts = folder.listFiles((File pathname) -> pathname.isFile() && pathname.getAbsoluteFile()
+                .toString().toLowerCase().endsWith(okExtension));
+            for(File f : ts){
+                System.out.printf("Test: %s\n", f.getName());
+                InputStream is = new FileInputStream(f);
+                State s = State.loadFromFile(is);
+                AbstractSearcher bfs = createSearcher(BFS);
+                AbstractSearcher dfs = createSearcher(DFS);
+                AbstractSearcher as = createSearcher(AS);
+                long t1 = solve(s, bfs);
+                long t2 = solve(s, dfs);
+                long t3 = solve(s, as);
+                System.out.printf("%d | %d | %d\n", t1,t2,t3);
+                
+            }
+            System.exit(0);
         }
         
         InputStream is;
@@ -85,7 +137,7 @@ public class UnlockMe {
         long elapsedTime = stopTime - startTime;
         
         // Pass elapsed time by System.err
-        System.err.print(elapsedTime);
+        System.err.println(elapsedTime);
         
         // Get the Java runtime
         Runtime runtime = Runtime.getRuntime();

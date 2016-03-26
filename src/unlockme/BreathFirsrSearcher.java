@@ -14,7 +14,7 @@ import java.util.Queue;
 public class BreathFirsrSearcher extends AbstractSearcher{
 
     private final Queue<Node> queue = new LinkedList<>();
-    private final List<State> visitedState = new ArrayList<>();
+    private final HashSet<State> visitedState = new HashSet<>();
     @Override
     public boolean search(State state) {
         Node head = new Node(0, state, null);

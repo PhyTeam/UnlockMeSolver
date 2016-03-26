@@ -262,7 +262,22 @@ public class State implements IState, Cloneable {
     
     @Override
     public double evaluationFunction(){
-        return 0;
+        double ret = 0;
+        Block head = null;
+       
+        // find the head
+        for (Block block : lblock){
+            if (block.index == -1) {
+                head = block;
+                break;
+            }
+        }
+        for (int i = mblocks.get(head).y + head.l; i <= 5; i++){
+            if (this.mState[2][i] != 0){
+                ret++;
+            }
+        }
+        return ret + 2;
     }
 
     @Override
