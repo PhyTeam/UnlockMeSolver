@@ -105,6 +105,7 @@ public class UnlockMe {
                 System.out.printf("Test: %s\n", f.getName());
                 InputStream is = new FileInputStream(f);
                 State s = State.loadFromFile(is);
+                
                 AbstractSearcher bfs = createSearcher(BFS);
                 AbstractSearcher dfs = createSearcher(DFS);
                 AbstractSearcher as = createSearcher(AS);
@@ -146,6 +147,8 @@ public class UnlockMe {
         // Calculate the used memory
         long memory = runtime.totalMemory() - runtime.freeMemory();
         System.err.print(memory);
+        
+        //if(!ret) System.exit(-1);
     }
     
 }

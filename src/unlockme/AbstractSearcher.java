@@ -15,7 +15,8 @@ public class AbstractSearcher{
         public int level;
         public Node preNode = null;
         public State state;
-
+        
+        private int hash;
         /**
          * Constructor
          * @param level the level of this state.
@@ -26,6 +27,8 @@ public class AbstractSearcher{
             this.level = level;
             this.state = state;
             this.preNode = prev;
+
+            this.hash = getHashCode();
         }
         
         @Override
@@ -44,11 +47,12 @@ public class AbstractSearcher{
                 return false;
             return this.state.equals(((Node)o).state);
         }
-
+        
+        private int getHashCode(){
+            return Objects.hashCode(this.state);
+        }
         @Override
         public int hashCode() {
-            int hash = 5;
-            hash = 79 * hash + Objects.hashCode(this.state);
             return hash;
         }
     }

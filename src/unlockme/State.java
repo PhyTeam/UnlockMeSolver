@@ -151,7 +151,34 @@ public class State implements IState, Cloneable {
         
         
     }
-    protected int mState[][];
+    //protected int mState[][];
+    
+    protected int mboard[];
+    
+    private final int mask = 0x1F;
+   
+    private void set(int value, int x, int y){
+        int offset = 5 * y;
+        int v = (value << offset) & (mask << offset) ;
+        mboard[x] = (v | (mboard[x] & ~(mask << offset)));
+    }
+    
+    private int get(int x, int y){
+        int val =  (mboard[x] >> ( y * 5 )) & mask;
+        if(val == mask)
+            return -1;
+        else return val;
+    }
+    
+    public static void main(String[] args){
+        State state = new State();
+        state.set(-1, 1, 2);
+        System.out.println(state.get(1, 2));
+        state.set(2,1,5);
+        System.out.println(state.get(1, 5));
+        state.set(4,1,4);
+        System.out.println(state.get(1,2));
+    }
     
     protected List<Block> lblock;
     
@@ -159,8 +186,9 @@ public class State implements IState, Cloneable {
     
     public State(){
         count++;
-        mState = new int[6][6];
+        //mState = new int[6][6];
         mblocks = new HashMap<>();
+        mboard = new int[6];
     }
     
     protected State move(Block block, int dx, int dy)  {
@@ -185,7 +213,8 @@ public class State implements IState, Cloneable {
             boolean conditions = inbound(x0 + i * sig * uvx, 0,5) && inbound(y0 + i * sig * uvy, 0, 5);
             //System.out.println(" IN = " + (y0 + i * sig * uvy));
             if (conditions) 
-                ok = this.mState[x0 + i * sig * uvx][ y0 + i * sig * uvy] == 0;
+                //ok = this.mState[x0 + i * sig * uvx][ y0 + i * sig * uvy] == 0;
+                ok = this.get(x0 + i * sig * uvx,y0 + i * sig * uvy) == 0;
             else ok = false;
             if(!ok) return null;
         }
@@ -196,19 +225,22 @@ public class State implements IState, Cloneable {
         // Save premove
         newstate.setPreMove(block.index, dx * uvx, dy * uvy);
         
-        for (int i = 0; i < 6; i++) {
-            System.arraycopy(this.mState[i], 0, newstate.mState[i], 0, 6);
-        }
+        System.arraycopy(this.mboard, 0, newstate.mboard, 0, 6);
+        //for (int i = 0; i < 6; i++) {
+        //    System.arraycopy(this.mState[i], 0, newstate.mState[i], 0, 6);
+        //}
         newstate.lblock = this.lblock;
         
         // Sinh trang thai moi
         for (int i = 0; i < block.getL(); i++) {
-            newstate.mState[pos.getX() + i * uvx]
-                  [pos.getY() + i * uvy] = 0;
+            //newstate.mState[pos.getX() + i * uvx]
+             //     [pos.getY() + i * uvy] = 0;
+            newstate.set(0, pos.getX() + i * uvx, pos.getY() + i * uvy);
         }
         for (int i = 0; i < block.getL(); i++) {
-            newstate.mState[pos.getX() + (dx + i) * uvx]
-                  [pos.getY() + (dy + i) * uvy] = block.getIndex();
+            //newstate.mState[pos.getX() + (dx + i) * uvx]
+            //    [pos.getY() + (dy + i) * uvy] = block.getIndex();
+            newstate.set(block.getIndex(), pos.getX() + (dx + i) * uvx, pos.getY() + (dy + i) * uvy);
         }
         // Create new block
         int nx = pos.x + dx * uvx;
@@ -231,7 +263,9 @@ public class State implements IState, Cloneable {
     
     @Override
     public boolean checkGoal(){
-        return mState[2][5] == -1;
+        //return mState[2][5] == -1;
+        return this.get(2, 5) == -1;
+        
     }
     
     @Override
@@ -273,7 +307,8 @@ public class State implements IState, Cloneable {
             }
         }
         for (int i = mblocks.get(head).y + head.l; i <= 5; i++){
-            if (this.mState[2][i] != 0){
+            //if (this.mState[2][i] != 0){
+            if (this.get(2, i) != 0){
                 ret++;
             }
         }
@@ -286,7 +321,8 @@ public class State implements IState, Cloneable {
             return false;
         State other = (State)o;
         boolean isEquals;
-        isEquals = this.mblocks.equals(other.mblocks);
+        //isEquals = this.mblocks.equals(other.mblocks);
+        isEquals = Arrays.equals(this.mboard, other.mboard);
         
         return isEquals;
     }
@@ -305,7 +341,8 @@ public class State implements IState, Cloneable {
         StringBuilder buff = new StringBuilder();
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
-                buff.append(this.mState[i][j]);
+                //buff.append(this.mState[i][j]);
+                buff.append(this.get(i, j));
                 buff.append("\t");
             }
             buff.append("\n");
@@ -323,23 +360,26 @@ public class State implements IState, Cloneable {
             int value = scanner.nextInt();
             int col = i % 6;
             int row = i / 6;
-            state.mState[row][col] = value;
+            //state.mState[row][col] = value;
+            state.set(value, row, col);
             i++;
         }
+        
         // Xu li du lieu
         boolean checked[][] = new boolean[6][6];
         for (int j = 0; j < 6; j++) {
             for (int k = 0; k < 6; k++) {
+                int count = 0;
                 if (checked[j][k])
                     continue;
                 checked[j][k] = true;
-                if(state.mState[j][k] != 0){
-                    int index = state.mState[j][k],
+                if(state.get(j,k) != 0){
+                    int index = state.get(j,k);
                         count = 1;
 
                     for (int l = 1; l < 6; l++) {
                         if (inbound(j + l, 0, 5) && (
-                                state.mState[j + l][k] == index)){
+                                state.get(j + l,k) == index)){
                             checked[j+l][k] = true;
                             count++;
                         }
@@ -358,7 +398,7 @@ public class State implements IState, Cloneable {
                     for (int l = 1; l < 6; l++) {
                         if (
                                 inbound(k + l, 0, 5) && 
-                                (state.mState[j][k + l] == index)){
+                                (state.get(j,k + l) == index)){
                             checked[j][k + l] = true;
                             count++;
                         }

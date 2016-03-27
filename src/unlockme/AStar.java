@@ -37,13 +37,9 @@ public class AStar extends AbstractSearcher {
                 if(!visitedState.contains(childNode.state)){
                     if (!openSet.contains(childNode)){
                         openSet.add(childNode);
-                        //System.out.println(openSet.size());
                     }
                 }
             });
-            
-            
-            
         }
         
         return false;
