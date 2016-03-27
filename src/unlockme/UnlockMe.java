@@ -138,7 +138,7 @@ public class UnlockMe {
         long elapsedTime = stopTime - startTime;
         
         // Pass elapsed time by System.err
-        System.err.println(elapsedTime);
+        System.out.println("t = " + elapsedTime);
         
         // Get the Java runtime
         Runtime runtime = Runtime.getRuntime();
@@ -146,9 +146,9 @@ public class UnlockMe {
         runtime.gc();
         // Calculate the used memory
         long memory = runtime.totalMemory() - runtime.freeMemory();
-        System.err.print(memory);
-        
-        //if(!ret) System.exit(-1);
+        System.out.println(memory);
+        System.out.println("NODE : " + State.count);
+        if(!ret) System.exit(-1);
     }
     
 }

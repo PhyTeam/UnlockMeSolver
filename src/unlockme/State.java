@@ -294,6 +294,134 @@ public class State implements IState, Cloneable {
         return ret;
     }
     
+    private double eval(int index, int row, int col, int level){
+        if (level > 5) return 0;
+        Block cur = null;
+        double res = 0, resl = 0;
+        for (Block block : lblock){
+            if (block.index == index) cur = block;
+        }
+        // test
+        
+        // truong hop tranh' cot
+        if ( row == -1){
+            
+            int a_left = col, a_right = 5 - col;
+            if (a_left < cur.l && a_right < cur.l) return -1;    // khong the di chuyen
+            else {
+                // co the dich trai
+                //double resl = 0;
+                if (a_left >= cur.l){
+                    for (int i = mblocks.get(cur).y- 1; i >= col - cur.l; i--){
+                        if (this.get(mblocks.get(cur).x,i) != 0){
+                            resl++;
+                            double n = eval(this.get(mblocks.get(cur).x,i),mblocks.get(cur).x, -1, level + 1);
+                            if (n == -1) {
+                                resl = -1;
+                                break;
+                            }
+                            resl += n;
+                        }
+                    }
+                    // neu ben trai khong he dung do -> return
+                    if ( resl == 0) return 0;
+                }
+                else resl = -1;  // khong the dich trai
+
+                // co the dich phai
+                if (a_right >= cur.l){
+                    for (int i = mblocks.get(cur).y + cur.l; i <= col + cur.l ; i++){
+                        if (this.get(mblocks.get(cur).x,i) != 0){
+                            res++;
+                            double n = eval(this.get(mblocks.get(cur).x,i),mblocks.get(cur).x, -1, level + 1);
+                            if (n == -1) {
+                                res = -1;
+                                break;
+                            }
+                            res += n;
+                        }
+                    }
+                    // neu ben phai khong he dung do -> return
+                    if ( res == 0) return 0;
+                }
+                else res = -1;   // khong the dich phai
+            }
+        }
+        // truong hop tranh hang
+        else if (col == -1){
+            int a_up = row, a_down = 5 - row;
+            if (a_up < cur.l && a_down < cur.l) return -1;    // khong the di chuyen
+            else {
+                // co the dich len
+                //double resl = 0;
+                if (a_up >= cur.l){
+                    for (int i = mblocks.get(cur).x - 1; i >= row - cur.l; i--){
+                        if (this.get(i,mblocks.get(cur).y) != 0){
+                            resl++;
+                            double n = eval(this.get(i,mblocks.get(cur).y),-1, mblocks.get(cur).y, level + 1);
+                            if (n == -1) {
+                                resl = -1;
+                                break;
+                            }
+                            resl += n;
+                        }
+                    }
+                    // neu ben tren khong he dung do -> return
+                    if ( resl == 0) return 0;
+                }
+                else resl = -1;  // khong the dich len
+                
+                // co the dich phai
+                if (a_down >= cur.l){
+                    for (int i = mblocks.get(cur).x + cur.l; i <= row + cur.l ; i++){
+                        if (this.get(i,mblocks.get(cur).y) != 0){
+                            //System.out.print(this);
+                            //System.out.println(i + " " + this.mState[i][cur.y]);
+                            res++;
+                            double n = eval(this.get(i,mblocks.get(cur).y),-1, mblocks.get(cur).y, level + 1);
+                            if (n == -1) {
+                                res = -1;
+                                break;
+                            }
+                            res += n;
+                        }
+                    }
+                    if ( res == 0) return 0;
+                }
+                else res = -1;   // khong the dich xuong
+            }
+        }
+        if ( res == -1) return resl;
+        else if (resl == -1) return res;
+        else if (res > resl) return resl;
+        else return resl;
+    }
+    
+    @Override
+    public double evaluationFunction(){
+        // TODO
+        double res = 0;
+        int i;
+        Block head = null;
+        // find the head
+        for (Block block : lblock){
+            if (block.index == -1) {
+                head = block;
+                break;
+            }
+        }
+        //System.out.println(head.index);
+        //System.out.println("head.x = " + head.x + "  head.l = " + head.l);
+        for (i = mblocks.get(head).y + head.l; i <= 5; i++){
+            if (this.get(2,i) != 0){
+                double n = eval(this.get(2,i),2,-1,0);
+                res = res + 1 + n;
+            }
+        }
+        return res;
+    }
+    
+  /* 
     @Override
     public double evaluationFunction(){
         double ret = 0;
@@ -314,7 +442,7 @@ public class State implements IState, Cloneable {
         }
         return ret + 2;
     }
-
+*/
     @Override
     public boolean equals(Object o) {
         if(o.getClass() != State.class)
