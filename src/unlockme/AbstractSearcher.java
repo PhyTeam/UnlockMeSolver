@@ -33,8 +33,8 @@ public class AbstractSearcher{
         
         @Override
         public int compareTo(Node o) {
-            double t_f = this.level + this.state.evaluationFunction();
-            double o_f = o.level + o.state.evaluationFunction();
+            double t_f = this.level + this.state.getEvaluationValueFromCache();
+            double o_f = o.level + o.state.getEvaluationValueFromCache();
             if (t_f <= o_f )
                 return -1;
             else if (t_f == o_f) 

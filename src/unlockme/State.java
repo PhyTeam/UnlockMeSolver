@@ -32,6 +32,8 @@ public class State implements IState, Cloneable {
     private int preY;
     private int preIndex;
     
+    private double heuristicValue;
+    
     public int getPreIndex(){
         return preIndex;
     };
@@ -279,6 +281,7 @@ public class State implements IState, Cloneable {
                     if(r == null) break;
                     else {
                         //System.out.println(r);
+                        r.evaluationFunction();
                         ret.add(r);
                     }
                 }
@@ -286,6 +289,7 @@ public class State implements IState, Cloneable {
                     r = move(block, -i, -i);
                     if(r == null) break;
                     else {
+                        r.evaluationFunction();
                         ret.add(r);
                     }
                 }
@@ -418,7 +422,12 @@ public class State implements IState, Cloneable {
                 res = res + 1 + n;
             }
         }
+        heuristicValue = res;
         return res;
+    }
+    
+    public double getEvaluationValueFromCache(){
+        return heuristicValue;
     }
     
   /* 
@@ -543,6 +552,7 @@ public class State implements IState, Cloneable {
         }
         
         // Return result
+        state.evaluationFunction();
         return state;
     }
     
