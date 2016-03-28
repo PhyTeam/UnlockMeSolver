@@ -17,6 +17,7 @@ public class BreathFirsrSearcher extends AbstractSearcher{
     private final HashSet<State> visitedState = new HashSet<>();
     @Override
     public boolean search(State state) {
+        State.setAllowCacheValue(false);
         Node head = new Node(0, state, null);
         // Add initial state
         visitedState.add(state);

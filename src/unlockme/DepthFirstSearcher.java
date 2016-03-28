@@ -18,6 +18,7 @@ public class DepthFirstSearcher extends AbstractSearcher {
     
     @Override
     public boolean search(State state) {
+        State.setAllowCacheValue(false);
         Node head = new Node(0, state, null);
         // Add initial state
         stack.add(head);

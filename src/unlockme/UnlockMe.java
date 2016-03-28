@@ -38,6 +38,8 @@ public class UnlockMe {
             return new ClimbHillSearcher();
         if(type.equalsIgnoreCase(AS))
             return new AStar();
+        if(type.equalsIgnoreCase(HCS))
+            return new ClimbHillSearcher();
         
         // Other algorithm 
         System.err.println("Unsupport algorthm.");
@@ -46,9 +48,10 @@ public class UnlockMe {
     
     public static long solve(State state, AbstractSearcher searcher){
         long startTime = System.currentTimeMillis();
+        State.count = 0;
         boolean ret = searcher.search(state);
-        if(ret) System.out.println("LOG: found");
-        else System.out.println("Not");
+        //if(ret) System.out.printf("LOG: found %d\n", State.count);
+        //else System.out.println("Not");
         //long memory = Runtime.getRuntime().
         //searcher.print();
         // Denote this is end of steps
@@ -66,6 +69,9 @@ public class UnlockMe {
         // Calculate the used memory
         long memory = runtime.totalMemory() - runtime.freeMemory();
         //System.err.print(memory);
+        
+        // Print result
+        System.out.printf("|%d\t|%d\t|%d\t|\n", elapsedTime, State.count, bytesToMegabytes(memory));
         return elapsedTime;
     }
     
@@ -112,7 +118,7 @@ public class UnlockMe {
                 long t1 = solve(s, bfs);
                 long t2 = solve(s, dfs);
                 long t3 = solve(s, as);
-                System.out.printf("%d | %d | %d\n", t1,t2,t3);
+                //System.out.printf("%d | %d | %d\n", t1,t2,t3);
                 
             }
             System.exit(0);
@@ -147,7 +153,7 @@ public class UnlockMe {
         // Calculate the used memory
         long memory = runtime.totalMemory() - runtime.freeMemory();
         System.out.println(memory);
-        System.out.println("NODE : " + State.count);
+        System.out.println("State createed : " + State.count);
         if(!ret) System.exit(-1);
     }
     

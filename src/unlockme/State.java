@@ -27,10 +27,14 @@ import java.util.logging.Logger;
  */
 public class State implements IState, Cloneable {
     
-    public static long count;
+    public static long count = 0;
     private int preX;
     private int preY;
     private int preIndex;
+    private static boolean isAllowCacheValue = false;
+    public static void setAllowCacheValue(boolean allow){
+        isAllowCacheValue = allow;
+    }
     
     private double heuristicValue;
     
@@ -281,7 +285,9 @@ public class State implements IState, Cloneable {
                     if(r == null) break;
                     else {
                         //System.out.println(r);
-                        r.evaluationFunction();
+                        if(isAllowCacheValue)
+                            r.evaluationFunction();
+                        
                         ret.add(r);
                     }
                 }
@@ -289,7 +295,8 @@ public class State implements IState, Cloneable {
                     r = move(block, -i, -i);
                     if(r == null) break;
                     else {
-                        r.evaluationFunction();
+                        if(isAllowCacheValue)
+                            r.evaluationFunction();
                         ret.add(r);
                     }
                 }
@@ -423,7 +430,7 @@ public class State implements IState, Cloneable {
             }
         }
         heuristicValue = res;
-        return res;
+        return res * 2;
     }
     
     public double getEvaluationValueFromCache(){
@@ -466,10 +473,11 @@ public class State implements IState, Cloneable {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 97 * hash + Objects.hashCode(this.mblocks);
+        int hash = 5;
+        hash = 53 * hash + Arrays.hashCode(this.mboard);
         return hash;
     }
+
     
     
     

@@ -19,6 +19,7 @@ public class AStar extends AbstractSearcher {
     PriorityQueue<Node> openSet = new PriorityQueue<>();
     @Override
     public boolean search(State state){
+        State.setAllowCacheValue(true);
         Node start = new Node(0,state,null);
         openSet.add(start);
         
